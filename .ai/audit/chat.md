@@ -75,3 +75,15 @@ Thank you for filling out the answers. I have reviewed them, and everything is c
 6. **Account Filtering**: Include Bank, Credit Card, Investment, Asset, and Loan accounts. Exclude Income and Expense categories.
 
 There are no ambiguities or contradictions. I am ready to begin Phase 1 (Fixing Swing thread safety, window targeting, and JDialog upgrade) whenever you give me permission to modify the code.
+
+## 2026-06-07T09:57:26-05:00 - User Request
+yes
+
+## Response
+Thank you for the permission! I have successfully implemented all Phase 1 tasks in `Quick Account Switcher.py`:
+
+1. **Swing Thread Safety**: Extracted the UI creation into a `build_ui` method and wrapped it in `SwingUtilities.invokeLater()` to ensure thread safety.
+2. **JDialog & Active Window Targeting**: The script now determines the currently active window using `KeyboardFocusManager` and parents a `JDialog` to it instead of a disconnected `JFrame`. This creates a polished modal experience.
+3. **Window Navigation Fix**: Changed the navigation call to use `MoneydanceGUI.getInstance().showAccountTransactionView(target_account)` which explicitly navigates the existing active main frame to the account instead of opening a brand new window.
+
+Phase 1 is complete! Please let me know if you would like to test this in the Moneybot console, or if we should proceed directly to Phase 2 (packaging the script as an `.mxt` extension).
