@@ -111,8 +111,19 @@ class QuickAccountSwitcher(object):
                 
                 # Use the recommended API to switch the existing view to the selected account register
                 try:
-                    mdGUI = MoneydanceGUI.getInstance()
-                    mdGUI.showAccountTransactionView(target_account)
+                    mdGUI = None
+                    # Standard extension context approach
+                    if hasattr(self.context, 'getUI'):
+                        mdGUI = self.context.getUI()
+                    # Fallback if context is already the GUI object
+                    elif hasattr(self.context, 'showAccountTransactionView'):
+                        mdGUI = self.context
+
+                    if mdGUI and hasattr(mdGUI, 'showAccountTransactionView'):
+                        mdGUI.showAccountTransactionView(target_account)
+                    else:
+                        # Final fallback for older APIs
+                        self.context.showAccount(target_account)
                 except Exception as e:
                     print "Error navigating to account:", e
                 
