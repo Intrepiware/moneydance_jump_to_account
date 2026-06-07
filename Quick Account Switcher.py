@@ -73,9 +73,8 @@ class QuickAccountSwitcher(object):
             idx = self.account_list_ui.getSelectedIndex()
             if idx >= 0:
                 target_account = self.current_matches[idx]
-                uuid = target_account.getUUID()
-                # Command Moneydance to jump to the selected account register
-                self.context.showURL("moneydance:showaccount:uuid=" + uuid)
+                # Use the direct API to switch the view to the selected account
+                self.context.getUI().showAccount(target_account)
                 self.frame.dispose() # Close switcher window
                 
         # Escape closes the window
