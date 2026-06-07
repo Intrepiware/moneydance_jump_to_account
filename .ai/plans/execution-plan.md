@@ -4,9 +4,10 @@
 
 In this phase, we will _only_ try to get the script working as a moneybot console script. We will not attempt to register it as an extension yet, to reduce scope.
 
-- [ ] Address Swing thread safety concerns flagged by AI
+- [x] Address Swing thread safety concerns flagged by AI
 - [ ] Address bug with script where selecting an account will open a new Moneydance window (instead of navigate the user within the existing window)
-- [ ] Implement UI design improvements suggested by AI (i.e., JDialog instead of JFrame)
+- [x] Implement UI design improvements suggested by AI (i.e., JDialog instead of JFrame)
+- [ ] Fix bug where selecting the account results in a crash instead of navigating to the desired account.
 
 ## Phase 2: Register the script as a Moneydance Extension
 
