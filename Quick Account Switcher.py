@@ -105,27 +105,9 @@ class QuickAccountSwitcher(object):
             idx = self.account_list_ui.getSelectedIndex()
             if idx >= 0:
                 target_account = self.current_matches[idx]
-                
-                # Close switcher window BEFORE navigating
-                self.dialog.dispose() 
-                
-                # Use the recommended API to switch the existing view to the selected account register
-                try:
-                    mdGUI = None
-                    # Standard extension context approach
-                    if hasattr(self.context, 'getUI'):
-                        mdGUI = self.context.getUI()
-                    # Fallback if context is already the GUI object
-                    elif hasattr(self.context, 'showAccountTransactionView'):
-                        mdGUI = self.context
-
-                    if mdGUI and hasattr(mdGUI, 'showAccountTransactionView'):
-                        mdGUI.showAccountTransactionView(target_account)
-                    else:
-                        # Final fallback for older APIs
-                        self.context.showAccount(target_account)
-                except Exception as e:
-                    print "Error navigating to account:", e
+                # Use the direct API to switch the view to the selected account
+                self.context.getUI().showAccount(target_account)
+                self.dialog.dispose() # Close switcher window
                 
         # Escape closes the window
         elif code == KeyEvent.VK_ESCAPE:
