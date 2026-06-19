@@ -1,3 +1,7 @@
+global moneydance                           # Entry point into the Moneydance API
+mdGUI = moneydance.getUI()                  # Entry point into the GUI
+book = moneydance.getCurrentAccountBook()   # Entry point into your dataset
+
 import sys
 from javax.swing import JDialog, JTextField, JList, JScrollPane, DefaultListModel, SwingUtilities, WindowConstants, BorderFactory
 from java.awt import BorderLayout, Font, KeyboardFocusManager
@@ -5,23 +9,38 @@ from java.awt.event import KeyAdapter, KeyEvent
 from com.infinitekind.moneydance.model import AccountUtil
 from com.moneydance.apps.md.view.gui import MoneydanceGUI
 
-class QuickAccountSwitcher(object):
-    def __init__(self, context, current_book):
-        self.context = context
-        self.book = current_book
+class QuickAccountSwitcherExtension(object):
+    # def __init__(self, context, current_book):
+    #     self.context = context
+    #     self.book = current_book
         
-        # 1. Fetch and store all accounts with their full path hierarchies
-        self.all_accounts = []
-        for acct in AccountUtil.getAccountIterator(self.book):
-            # Exclude the root account itself
-            if acct.getParentAccount():
-                self.all_accounts.append(acct)
+    #     # 1. Fetch and store all accounts with their full path hierarchies
+    #     self.all_accounts = []
+    #     for acct in AccountUtil.getAccountIterator(self.book):
+    #         # Exclude the root account itself
+    #         if acct.getParentAccount():
+    #             self.all_accounts.append(acct)
         
-        # Sort accounts alphabetically by their full display name
-        self.all_accounts.sort(key=lambda x: x.getFullAccountName().lower())
+    #     # Sort accounts alphabetically by their full display name
+    #     self.all_accounts.sort(key=lambda x: x.getFullAccountName().lower())
         
-        # Build UI on Event Dispatch Thread for thread safety
-        SwingUtilities.invokeLater(self.build_ui)
+    #     # Build UI on Event Dispatch Thread for thread safety
+    #     SwingUtilities.invokeLater(self.build_ui)
+
+    def initialize(self, extension_context, extension_object):
+        self.moneydanceContext = extension_context
+        self.moneydanceExtensionObject = extension_object
+        self.moneydanceContext.registerFeature(extension_object, "popup", None, "Quick Account Switcher")
+
+    def invoke(self, eventString=""):
+        self.moneydanceContext.setStatus("Python extension received command: %s" % (eventString))
+
+        if eventString=='popup':
+            self.build_ui()
+
+    def __str__(self):
+	    return "QuickAccountSwitcher"
+
 
     def build_ui(self):
         # 2. Build the Swing UI components
@@ -123,10 +142,14 @@ class QuickAccountSwitcher(object):
             self.update_list_view()
 
 # Execution entry point inside Moneybot
-try:
-    # 'moneydance' and 'moneydance_data' are globally injected handles in the console
-    book = moneydance_data
-    # Initialize the UI switcher instance
-    QuickAccountSwitcher(moneydance, book)
-except NameError:
-    print "Error: This script must be executed inside the Moneydance Moneybot Console."
+# try:
+#     # 'moneydance' and 'moneydance_data' are globally injected handles in the console
+#     book = moneydance_data
+#     # Initialize the UI switcher instance
+#     QuickAccountSwitcher(moneydance, book)
+# except NameError:
+#     print "Error: This script must be executed inside the Moneydance Moneybot Console."
+
+# Tell moneydance this is an extension
+moneydance_extension =  QuickAccountSwitcherExtension()
+
