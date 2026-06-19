@@ -3,6 +3,7 @@ mdGUI = moneydance.getUI()                  # Entry point into the GUI
 book = moneydance.getCurrentAccountBook()   # Entry point into your dataset
 
 import sys
+from java.lang import System
 from javax.swing import JDialog, JTextField, JList, JScrollPane, DefaultListModel, SwingUtilities, WindowConstants, BorderFactory
 from java.awt import BorderLayout, Font, KeyboardFocusManager
 from java.awt.event import KeyAdapter, KeyEvent
@@ -36,7 +37,18 @@ class QuickAccountSwitcherExtension(object):
         self.moneydanceContext.setStatus("Python extension received command: %s" % (eventString))
 
         if eventString=='popup':
-            self.build_ui()
+            self.all_accounts = []
+            self.enable_selection = False
+            for acct in AccountUtil.getAccountIterator(book):
+                # Exclude the root account itself
+                if acct.getParentAccount():
+                    self.all_accounts.append(acct)
+            
+            # Sort accounts alphabetically by their full display name
+            self.all_accounts.sort(key=lambda x: x.getFullAccountName().lower())
+            
+            # Build UI on Event Dispatch Thread for thread safety
+            SwingUtilities.invokeLater(self.build_ui)
 
     def __str__(self):
 	    return "QuickAccountSwitcher"
@@ -105,7 +117,7 @@ class QuickAccountSwitcherExtension(object):
 
     def handle_key_released(self, event):
         code = event.getKeyCode()
-        
+
         # Arrow down moves focus from search field straight into the results list
         if code == KeyEvent.VK_DOWN:
             idx = self.account_list_ui.getSelectedIndex()
@@ -121,12 +133,15 @@ class QuickAccountSwitcherExtension(object):
                 
         # Enter executes the jump
         elif code == KeyEvent.VK_ENTER:
-            idx = self.account_list_ui.getSelectedIndex()
-            if idx >= 0:
-                target_account = self.current_matches[idx]
-                # Use the direct API to switch the view to the selected account
-                self.context.getUI().showAccount(target_account)
-                self.dialog.dispose() # Close switcher window
+            if self.enable_selection:
+                idx = self.account_list_ui.getSelectedIndex()
+                if idx >= 0:
+                    target_account = self.current_matches[idx]
+                    # Use the direct API to switch the view to the selected account
+                    self.moneydanceContext.getUI().selectAccount(target_account)
+                    self.dialog.dispose() # Close switcher window
+            else:
+                self.enable_selection = True
                 
         # Escape closes the window
         elif code == KeyEvent.VK_ESCAPE:
