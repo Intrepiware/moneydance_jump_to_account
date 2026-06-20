@@ -16,7 +16,7 @@ class LaunchMessageAction(AbstractAction):
     def actionPerformed(self, event):
         try:
             # Trigger the standard invocation path
-            self.ext.invoke("popup")
+            self.ext.invoke("shortcut")
         except Exception as e:
             import traceback
             traceback.print_exc(file=sys.stderr)
@@ -32,13 +32,16 @@ class QuickAccountSwitcherExtension(object):
 
     def invoke(self, eventString=""):
         self.moneydanceContext.setStatus("Python extension received command: %s" % (eventString))
+        self.enable_selection = True
 
         if eventString=='popup':
-            self.all_accounts = []
             self.enable_selection = False
+
+        if eventString in ['popup', 'shortcut']:
+            self.all_accounts = []
             for acct in AccountUtil.getAccountIterator(book):
                 # Exclude the root account itself
-                if acct.getParentAccount():
+                if acct.getParentAccount() and not acct.accountIsInactive:
                     self.all_accounts.append(acct)
             
             # Sort accounts alphabetically by their full display name
