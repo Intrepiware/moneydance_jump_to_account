@@ -11,22 +11,6 @@ from com.infinitekind.moneydance.model import AccountUtil
 from com.moneydance.apps.md.view.gui import MoneydanceGUI
 
 class QuickAccountSwitcherExtension(object):
-    # def __init__(self, context, current_book):
-    #     self.context = context
-    #     self.book = current_book
-        
-    #     # 1. Fetch and store all accounts with their full path hierarchies
-    #     self.all_accounts = []
-    #     for acct in AccountUtil.getAccountIterator(self.book):
-    #         # Exclude the root account itself
-    #         if acct.getParentAccount():
-    #             self.all_accounts.append(acct)
-        
-    #     # Sort accounts alphabetically by their full display name
-    #     self.all_accounts.sort(key=lambda x: x.getFullAccountName().lower())
-        
-    #     # Build UI on Event Dispatch Thread for thread safety
-    #     SwingUtilities.invokeLater(self.build_ui)
 
     def initialize(self, extension_context, extension_object):
         self.moneydanceContext = extension_context
@@ -138,7 +122,9 @@ class QuickAccountSwitcherExtension(object):
                 if idx >= 0:
                     target_account = self.current_matches[idx]
                     # Use the direct API to switch the view to the selected account
-                    self.moneydanceContext.getUI().selectAccount(target_account)
+                    # HACK: unsupported API - https://infinitekind.tenderapp.com/discussions/moneydance-development/13732-ui-selection
+                    main_frame = mdGUI.getFirstMainFrame()
+                    main_frame.selectAccount(target_account)
                     self.dialog.dispose() # Close switcher window
             else:
                 self.enable_selection = True
@@ -155,15 +141,6 @@ class QuickAccountSwitcherExtension(object):
                 if search_text in acct.getFullAccountName().lower()
             ]
             self.update_list_view()
-
-# Execution entry point inside Moneybot
-# try:
-#     # 'moneydance' and 'moneydance_data' are globally injected handles in the console
-#     book = moneydance_data
-#     # Initialize the UI switcher instance
-#     QuickAccountSwitcher(moneydance, book)
-# except NameError:
-#     print "Error: This script must be executed inside the Moneydance Moneybot Console."
 
 # Tell moneydance this is an extension
 moneydance_extension =  QuickAccountSwitcherExtension()
