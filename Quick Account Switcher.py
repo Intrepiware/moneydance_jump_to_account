@@ -57,12 +57,12 @@ class QuickAccountSwitcherExtension(object):
     def build_ui(self):
         # 2. Build the Swing UI components
         # Get the currently active window to act as parent for the modal JDialog
-        active_window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow()
+        self.active_window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow()
         
         # Using JDialog instead of JFrame for a modal, integrated experience
         # If active_window is a Frame or Dialog, Jython handles the overloaded constructor
         try:
-            self.dialog = JDialog(active_window, "Jump to Account", True)
+            self.dialog = JDialog(self.active_window, "Jump to Account", True)
         except TypeError:
             # Fallback if active_window is null or incompatible
             self.dialog = JDialog()
@@ -70,7 +70,7 @@ class QuickAccountSwitcherExtension(object):
             self.dialog.setModal(True)
             
         self.dialog.setSize(500, 350)
-        self.dialog.setLocationRelativeTo(active_window) # Center on parent frame
+        self.dialog.setLocationRelativeTo(self.active_window) # Center on parent frame
         self.dialog.setLayout(BorderLayout())
         self.dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
         
