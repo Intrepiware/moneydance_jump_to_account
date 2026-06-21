@@ -95,7 +95,6 @@ class QuickAccountSwitcherExtension(object):
 
         if input_map.get(precise_stroke) is None:
             input_map.put(precise_stroke, action_key)
-            # Pass the frame context into the action constructor
             root_pane.getActionMap().put(action_key, LaunchMessageAction(self, frame))
 
     def handle_event(self, eventString):
@@ -110,7 +109,6 @@ class QuickAccountSwitcherExtension(object):
         return "QuickAccountSwitcher"
 
     def build_ui(self):
-        # Anchor the dialog to our verified target frame context
         try:
             self.dialog = JDialog(self.trigger_frame, "Jump to Account", True)
         except TypeError:
@@ -182,9 +180,9 @@ class QuickAccountSwitcherExtension(object):
                 if idx >= 0:
                     target_account = self.current_matches[idx]
                     
-                    # Navigate via the target frame's UI controller context
+                    # Call selectAccount directly on the active target frame
                     if self.trigger_frame:
-                        self.trigger_frame.getController().showAccount(target_account)
+                        self.trigger_frame.selectAccount(target_account)
                         
                     self.dialog.dispose()
             else:
