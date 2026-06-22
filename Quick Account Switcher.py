@@ -55,7 +55,6 @@ class QuickAccountSwitcherExtension(object):
         kfm.addPropertyChangeListener("activeWindow", self.focus_listener)        
 
     def invoke(self, eventString="", target_frame=None):
-        self.moneydanceContext.setStatus("Python extension received command: %s" % (eventString))
         self.enable_selection = True
 
         # Capture the context frame. Fall back to current keyboard focus if launched via top menu.
@@ -98,7 +97,7 @@ class QuickAccountSwitcherExtension(object):
             root_pane.getActionMap().put(action_key, LaunchMessageAction(self, frame))
 
     def handle_event(self, eventString):
-        print("QuickAccountSwitcher detected event: %s" % (eventString))
+        pass
 
     def unload(self):
         if self.focus_listener:
