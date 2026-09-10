@@ -1,18 +1,35 @@
+$ErrorActionPreference = "Stop"
 $extId = "quick_account_switcher"
-$sourceDir = ".\ext"
-$zipFile = ".\$extId.zip"
-$mxtFile = ".\$extId.mxt"
+$sourceDir = Join-Path $PSScriptRoot "ext"
+$mxtFile = Join-Path $PSScriptRoot "$extId.mxt"
 
-# 1. Clean previous build artifacts
-Remove-Item $zipFile, $mxtFile -ErrorAction SilentlyContinue
+foreach ($requiredFile in @("meta_info.dict", "script_info.dict", "$extId.py")) {
+    if (-not (Test-Path -LiteralPath (Join-Path $sourceDir $requiredFile) -PathType Leaf)) {
+        throw "Missing required extension file: $requiredFile"
+    }
+}
 
-# 2. Compress extension folder contents into ZIP format
-Compress-Archive -Path "$sourceDir\*" -DestinationPath $zipFile
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-# 3. Rename .zip to .mxt
-Rename-Item -Path $zipFile -NewName $mxtFile
+# Write explicit JAR entry names so paths use forward slashes on Windows too.
+$stream = [System.IO.File]::Open($mxtFile, [System.IO.FileMode]::Create)
+try {
+    $archive = [System.IO.Compression.ZipArchive]::new($stream, [System.IO.Compression.ZipArchiveMode]::Create)
+    try {
+        foreach ($file in Get-ChildItem -LiteralPath $sourceDir -File -Recurse) {
+            $entryName = $file.FullName.Substring($sourceDir.Length + 1).Replace('\', '/')
+            if ($entryName -eq "meta_info.dict") {
+                $entryName = "com/moneydance/modules/features/$extId/meta_info.dict"
+            }
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                $archive, $file.FullName, $entryName) | Out-Null
+        }
+    } finally {
+        $archive.Dispose()
+    }
+} finally {
+    $stream.Dispose()
+}
 
-# 4. Sign the .mxt package using Moneydance Developer Kit
-# java -cp signext.jar com.infinitekind.moneydance.tools.SignExt $privKey $privKeyId $extId $mxtFile
-
-Write-Host "Build and signing complete: $mxtFile" -ForegroundColor Green
+Write-Host "Build complete (unsigned): $mxtFile" -ForegroundColor Green
