@@ -1,0 +1,10 @@
+{
+  "vendor" = "Mike Devlin"
+  "vendor_url" = "https://mikedevlin.site"
+  "module_name" = "Quick Account Switcher"
+  "module_desc" = "Enables quick switching between Moneydance accounts via the ctrl+shift+J shortcut."
+  "module_build" = "101"
+  "minbuild" = "3056"
+  "extension_type" = "python"
+  "id" = "quick_account_switcher"
+}

@@ -1,10 +1,6 @@
-global moneydance                           # Entry point into the Moneydance API
-mdGUI = moneydance.getUI()                  # Entry point into the GUI
-book = moneydance.getCurrentAccountBook()   # Entry point into your dataset
-
 import sys
 from javax.swing import AbstractAction, KeyStroke, JComponent, JDialog, JTextField, JList, JScrollPane, DefaultListModel, SwingUtilities, WindowConstants, BorderFactory
-from java.awt import BorderLayout, Font, KeyboardFocusManager, Toolkit
+from java.awt import BorderLayout, Font, KeyboardFocusManager, Toolkit, Window
 from java.awt.event import KeyAdapter, KeyEvent, InputEvent
 from java.beans import PropertyChangeListener
 from com.infinitekind.moneydance.model import AccountUtil
@@ -39,22 +35,31 @@ class QuickAccountSwitcherExtension(object):
     def __init__(self):
         self.focus_listener = None
         self.trigger_frame = None
+        self.active = False
 
     def initialize(self, extension_context, extension_object):
         self.moneydanceContext = extension_context
         self.moneydanceExtensionObject = extension_object
 
-        # Bind the keyboard hooks to the active window pane
-        primary_win = mdGUI.getFirstMainFrame()
-        if primary_win:
-            self.register_shortcut_on_frame(primary_win)
-
-        # Start tracking focus globally to catch new windows opened later
+        self.active = True
+        # Startup can precede both the GUI and dataset. Watch for windows first.
         self.focus_listener = WindowFocusTracker(self)
         kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-        kfm.addPropertyChangeListener("activeWindow", self.focus_listener)        
+        kfm.addPropertyChangeListener("activeWindow", self.focus_listener)
+        SwingUtilities.invokeLater(self.register_existing_windows)
+
+    def register_existing_windows(self):
+        if self.active:
+            for window in Window.getWindows():
+                if window.getClass().getSimpleName() == "MainFrame":
+                    self.register_shortcut_on_frame(window)
 
     def invoke(self, eventString="", target_frame=None):
+        if not self.active:
+            return
+        book = self.moneydanceContext.getCurrentAccountBook()
+        if book is None:
+            return
         self.enable_selection = True
 
         # Capture the context frame. Fall back to current keyboard focus if launched via top menu.
@@ -65,7 +70,7 @@ class QuickAccountSwitcherExtension(object):
             if active_win and active_win.getClass().getSimpleName() == "MainFrame":
                 self.trigger_frame = active_win
             else:
-                self.trigger_frame = mdGUI.getFirstMainFrame()
+                self.trigger_frame = self.moneydanceContext.getUI().getFirstMainFrame()
 
         if eventString == 'popup':
             self.enable_selection = False
@@ -83,8 +88,13 @@ class QuickAccountSwitcherExtension(object):
         """
         Safely registers the shortcut mapping on a specific frame's root pane.
         """
+        if not self.active:
+            return
+        if not SwingUtilities.isEventDispatchThread():
+            SwingUtilities.invokeLater(lambda: self.register_shortcut_on_frame(frame))
+            return
         root_pane = frame.getRootPane()
-        action_key = "LaunchSimpleMessageExtension"
+        action_key = "quick_account_switcher.launch"
 
         input_map = root_pane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
 
@@ -97,17 +107,43 @@ class QuickAccountSwitcherExtension(object):
             root_pane.getActionMap().put(action_key, LaunchMessageAction(self, frame))
 
     def handle_event(self, eventString):
-        pass
+        if eventString == "md:file:opened":
+            SwingUtilities.invokeLater(self.register_existing_windows)
 
     def unload(self):
+        self.active = False
         if self.focus_listener:
             kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
             kfm.removePropertyChangeListener("activeWindow", self.focus_listener)
+            self.focus_listener = None
+        SwingUtilities.invokeLater(self.remove_shortcuts)
+
+    def remove_shortcuts(self):
+        for window in Window.getWindows():
+            if window.getClass().getSimpleName() != "MainFrame":
+                continue
+            root = window.getRootPane()
+            action_key = "quick_account_switcher.launch"
+            action = root.getActionMap().get(action_key)
+            if isinstance(action, LaunchMessageAction) and action.ext is self:
+                input_map = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                for stroke in input_map.keys() or []:
+                    if input_map.get(stroke) == action_key:
+                        input_map.remove(stroke)
+                root.getActionMap().remove(action_key)
+        self.trigger_frame = None
+        self.all_accounts = []
+        self.current_matches = []
+        if getattr(self, "dialog", None) is not None:
+            self.dialog.dispose()
+            self.dialog = None
 
     def __str__(self):
         return "QuickAccountSwitcher"
 
     def build_ui(self):
+        if not self.active:
+            return
         try:
             self.dialog = JDialog(self.trigger_frame, "Jump to Account", True)
         except TypeError:
