@@ -1,7 +1,9 @@
 $ErrorActionPreference = "Stop"
 $extId = "quick_account_switcher"
 $sourceDir = Join-Path $PSScriptRoot "ext"
-$mxtFile = Join-Path $PSScriptRoot "$extId.mxt"
+$mxtFile = Join-Path $PSScriptRoot "build/$extId.mxt"
+
+if(-not(Test-Path build)) { New-Item -Type Directory -Force build }
 
 foreach ($requiredFile in @("meta_info.dict", "script_info.dict", "$extId.py")) {
     if (-not (Test-Path -LiteralPath (Join-Path $sourceDir $requiredFile) -PathType Leaf)) {
